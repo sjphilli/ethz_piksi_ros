@@ -33,6 +33,7 @@ from sbp.settings import *
 from zope.interface.exceptions import Invalid
 # Piksi Multi features an IMU
 from sbp.imu import *
+from sbp.mag import *
 # At the moment importing 'sbp.version' module causes ValueError: Cannot find the version number!
 # import sbp.version
 # networking stuff
