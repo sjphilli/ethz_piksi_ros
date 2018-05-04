@@ -220,6 +220,9 @@ class PiksiMulti:
         self.init_callback('imu_raw_multi', ImuRawMulti,
                            SBP_MSG_IMU_RAW, MsgImuRaw,
                            'tow', 'tow_f', 'acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z')
+        self.init_callback('mag_raw_multi', MagRawMulti,
+                           SBP_MSG_MAG_RAW, MsgMagRaw,
+                           'tow', 'tow_f', 'mag_x', 'mag_y', 'mag_z')
         self.init_callback('imu_aux', ImuAuxMulti,
                            SBP_MSG_IMU_AUX, MsgImuAux, 'imu_type', 'temp', 'imu_conf')
         self.init_callback('log', Log,
@@ -323,6 +326,8 @@ class PiksiMulti:
                                                        UtcTimeMulti, queue_size=10)
         publishers['imu_raw_multi'] = rospy.Publisher(rospy.get_name() + '/imu_raw',
                                                       ImuRawMulti, queue_size=10)
+        publishers['mag_raw_multi'] = rospy.Publisher(rospy.get_name() + '/mag_raw',
+                                                      MagRawMulti, queue_size=10)
         publishers['imu_aux_multi'] = rospy.Publisher(rospy.get_name() + '/debug/imu_aux',
                                                       ImuAuxMulti, queue_size=10)
         publishers['baseline_heading'] = rospy.Publisher(rospy.get_name() + '/baseline_heading',

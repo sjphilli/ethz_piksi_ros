@@ -33,6 +33,7 @@ add_message_files(
     ImuRawMulti.msg
     InfoWifiCorrections.msg
     Log.msg
+    MagRawMulti.msg
     Observation.msg
     PosEcef.msg
     PosLlh.msg
