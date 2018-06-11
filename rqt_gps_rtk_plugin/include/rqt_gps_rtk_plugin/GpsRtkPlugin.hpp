@@ -2,25 +2,53 @@
 #define GPSRTKPLUGIN_H
 
 #include <rqt_gui_cpp/plugin.h>
-#include <ui_gps_rtk_plugin.h>
-#include <QWidget>
 
+// Qt
+#include <QWidget>
+#include <QString>
+
+// ui
+#include <rqt_gps_rtk_plugin/ui_gps_rtk_plugin.h>
+
+// std
 #include <algorithm>
 #include <unistd.h>
+#include <memory>
 
+// ros
 #include <ros/ros.h>
-#include <piksi_rtk_msgs/ReceiverState_V2_2_15.h>
+
+// messages
+#include <piksi_rtk_msgs/ReceiverState_V2_3_15.h>
 #include <piksi_rtk_msgs/BaselineNed.h>
 #include <piksi_rtk_msgs/InfoWifiCorrections.h>
 #include <piksi_rtk_msgs/UtcTimeMulti.h>
 #include <piksi_rtk_msgs/AgeOfCorrections.h>
 #include <sensor_msgs/NavSatFix.h>
 
+// worker
+#include <any_worker/Worker.hpp>
+
 constexpr double kSignalStrengthScalingFactor = 4.0;
 
-class GpsRtkPlugin : public rqt_gui_cpp::Plugin {
-  Q_OBJECT
-public:
+struct TimeStamps {
+  double receiverStateStamp_;
+  double baselineNedStamp_;
+  double wifiCorrectionsStamp_;
+  double navsatfixRtkFixStamp_;
+
+  void setGlobalStamp(double stamp) {
+    receiverStateStamp_ = stamp;
+    baselineNedStamp_ = stamp;
+    wifiCorrectionsStamp_ = stamp;
+    navsatfixRtkFixStamp_ = stamp;
+  }
+};
+
+class GpsRtkPlugin : public rqt_gui_cpp::Plugin
+{
+Q_OBJECT
+ public:
   GpsRtkPlugin();
   virtual void initPlugin(qt_gui_cpp::PluginContext& context);
   virtual void shutdownPlugin();
@@ -30,7 +58,7 @@ public:
   // Comment in to signal that the plugin has a way to configure it
   //bool hasConfiguration() const;
   //void triggerConfiguration();
-private:
+ private:
   Ui::GpsRtkPlugin ui_;
   QWidget* widget_;
 
@@ -38,7 +66,7 @@ private:
   void initLabels();
   void initSubscribers();
 
-  template <typename T>
+  template<typename T>
   void vectorToString(const std::vector<T> &vec, QString *pString) {
     *pString = "[";
     for (auto i = vec.begin(); i != vec.end(); ++i) {
@@ -50,15 +78,15 @@ private:
     *pString += "]";
   }
 
-  template <typename T>
+  template<typename T>
   std::vector<T> scaleSignalStrength(const std::vector<T> &vec_signal_strength) {
     auto scaled_signal_strength = vec_signal_strength;
-    for_each(scaled_signal_strength.begin(),
-             scaled_signal_strength.end(),
-             [](T &signal_strength) { signal_strength /= kSignalStrengthScalingFactor; });
+    for_each(scaled_signal_strength.begin(), scaled_signal_strength.end(), [](T &signal_strength) {signal_strength /= kSignalStrengthScalingFactor;});
 
     return scaled_signal_strength;
   }
+
+  bool updateWorkerCb(const any_worker::WorkerEvent& event);
 
   //subscribers
   ros::Subscriber piksiReceiverStateSub_;
@@ -68,7 +96,7 @@ private:
   ros::Subscriber piksiHeartbeatSub_;
   ros::Subscriber piksiAgeOfCorrectionsSub_;
 
-  void piksiReceiverStateCb(const piksi_rtk_msgs::ReceiverState_V2_2_15& msg);
+  void piksiReceiverStateCb(const piksi_rtk_msgs::ReceiverState_V2_3_15& msg);
   void piksiBaselineNedCb(const piksi_rtk_msgs::BaselineNed& msg);
   void piksiWifiCorrectionsCb(const piksi_rtk_msgs::InfoWifiCorrections& msg);
   void piksiNavsatfixRtkFixCb(const sensor_msgs::NavSatFix& msg);
@@ -86,12 +114,10 @@ private:
   int wifiCorrectionsAvgHz_;
   int numCorrectionsFirstSampleMovingWindow_;
   std::vector<double> altitudes_;
-
-protected slots:
-  //line edits
-
-signals:
-  void stateChanged();
+  std::unique_ptr<any_worker::Worker> updateWorker_;
+  TimeStamps lastMsgStamps_;
+  // The max allowed timeout [s] before GUI information is updated with "N/A"
+  double maxTimeout_;
 };
 
 #endif // GPSRTKPLUGIN_H
